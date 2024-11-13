@@ -2,6 +2,8 @@ package com.dacslab.android.sleeping.view.home
 
 import android.util.Log
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,6 +39,7 @@ fun PasswordChangeScreen(
             PasswordChangeContent(
                 modifier = Modifier.padding(padding),
                 userViewModel = userViewModel,
+                bottomNavController = bottomNavController
             )
         }
     )
@@ -67,6 +70,7 @@ fun PasswordChangeScreen(
 fun PasswordChangeContent(
     modifier: Modifier = Modifier,
     userViewModel: UserViewModel,
+    bottomNavController: NavController
 ) {
     var oldPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
@@ -99,8 +103,10 @@ fun PasswordChangeContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             PasswordField(
                 label = "현재 비밀번호",
@@ -119,7 +125,8 @@ fun PasswordChangeContent(
                 password = confirmPassword,
                 onPasswordChange = { confirmPassword = it }
             )
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(16.dp))
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -130,6 +137,22 @@ fun PasswordChangeContent(
                 enabled = !isLoading
             ) {
                 Text("비밀번호 변경", fontSize = 18.sp)
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                onClick = {
+                    bottomNavController.popBackStack()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                enabled = !isLoading
+            ) {
+                Text("다음에 변경", fontSize = 18.sp)
             }
 
             if (isLoading) {
