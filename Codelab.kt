@@ -30,7 +30,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -70,8 +69,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.dacslab.android.sleeping.model.User
-import com.dacslab.android.sleeping.viewmodel.AuthViewModel
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 
@@ -249,132 +246,6 @@ fun MyDropdown(
 
 
 
-@Composable
-fun RegisterBox(
-    authViewModel: AuthViewModel
-) {
-    // 입력값을 저장할 상태 변수
-    var userName by remember { mutableStateOf("") }
-    var userGender by remember { mutableStateOf<String?>(null) }
-    var userId by remember { mutableStateOf("") }
-    var userPw by remember { mutableStateOf("") }
-    var confirmUserPw by remember { mutableStateOf("") }
-    var userHeight by remember { mutableStateOf<String?>(null) }
-    var userWeight by remember { mutableStateOf<String?>(null) }
-    var userAge by remember { mutableStateOf<String?>(null) }
-    var userComp by remember { mutableStateOf<Boolean?>(null) }
-
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        ShapeBox(shape = RoundedCornerShape(20.dp)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(14.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                MyTextField(
-                    label = "이름 *",
-                    value = userName,
-                    onValueChange = { userName = it }
-                )
-                MyDropdown(
-                    label = "성별",
-                    options = listOf("남", "여"),
-                    selectedOption = userGender ?: "",
-                    onOptionSelected = {
-                        userGender = when (it) {
-                            "남" -> "남"
-                            "여" -> "여"
-                            else -> null
-                        }
-                    }
-                )
-                MyTextField(
-                    label = "사용할 아이디 *",
-                    value = userId,
-                    onValueChange = { userId = it }
-                )
-                MyVisibleTextField(
-                    label = "비밀번호 *",
-                    value = userPw,
-                    onValueChange = { userPw = it }
-                )
-                MyVisibleTextField(
-                    label = "비밀번호 확인 *",
-                    value = confirmUserPw,
-                    onValueChange = { confirmUserPw = it }
-                )
-                MyTextField(
-                    label = "키 (cm생략, ex:170)",
-                    value = userHeight,
-                    onValueChange = { userHeight = it }
-                )
-                MyTextField(
-                    label = "몸무게 (kg생략, ex:60)",
-                    value = userWeight,
-                    onValueChange = { userWeight = it }
-                )
-                MyTextField(
-                    label = "나이 (ex:25)",
-                    value = userAge,
-                    onValueChange = { userAge = it }
-                )
-                MyDropdown(
-                    label = "합병증 유무",
-                    options = listOf("O", "X"),
-                    selectedOption = "",
-                    onOptionSelected = {
-                        userComp = when (it) {
-                            "O" -> true
-                            "X" -> false
-                            else -> null
-                        }
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // 회원가입 버튼
-                Button(
-                    modifier = Modifier
-                        .height(60.dp)
-                        .fillMaxWidth(),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
-                    onClick = {
-                        // 비밀번호 확인
-                        if (userPw == confirmUserPw) {
-                            val user = User(
-                                userId = userId,
-                                userPw = userPw,
-                                userName = userName,
-                                userGender = when (userGender) {
-                                    "남" -> "M"
-                                    "여" -> "F"
-                                    else -> null
-                                },
-                                userAge = userAge?.toIntOrNull(),
-                                userHeight = userHeight?.toIntOrNull(),
-                                userWeight = userWeight?.toIntOrNull(),
-                                userComp = when (userComp) {
-                                    true -> true
-                                    false -> false
-                                    else -> null
-                                }
-                            )
-                            authViewModel.register(user)
-                        } else {
-                            authViewModel.clearError()
-                            authViewModel.setError("비밀번호가 일치하지 않습니다.")
-                        }
-                    }
-                ) {
-                    Text(text = "회원가입", fontSize = 20.sp)
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun ScrollContent(innerPadding: PaddingValues) {
