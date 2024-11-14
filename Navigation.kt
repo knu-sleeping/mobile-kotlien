@@ -19,6 +19,7 @@ import com.dacslab.android.sleeping.view.home.MeasurementScreen
 import com.dacslab.android.sleeping.view.home.PasswordChangeScreen
 import com.dacslab.android.sleeping.view.home.ProfileScreen
 import com.dacslab.android.sleeping.view.home.ResultShowScreen
+import com.dacslab.android.sleeping.view.home.UserInfoUpdateScreen
 
 
 object MainRoutes {
@@ -41,6 +42,7 @@ object HomeRoutes {
 object ProfileRoutes {
     const val PROFILE = "profile"
     const val PASSWORD_CHANGE = "pw_change"
+    const val UPDATE_USERINFO = "update_userinfo"
 }
 
 @Composable
@@ -122,6 +124,13 @@ fun NavGraphBuilder.profileNavGraph(
         }
         composable(ProfileRoutes.PASSWORD_CHANGE) {
             PasswordChangeScreen(
+                bottomNavController = bottomNavController,
+                mainNavController = mainNavController
+            )
+        }
+
+        composable(ProfileRoutes.UPDATE_USERINFO) {
+            UserInfoUpdateScreen(
                 bottomNavController = bottomNavController,
                 mainNavController = mainNavController
             )

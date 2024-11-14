@@ -1,4 +1,4 @@
-package com.dacslab.android.sleeping.view.auth
+package com.dacslab.android.sleeping.view.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,35 +37,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.dacslab.android.sleeping.AuthRoutes
-import com.dacslab.android.sleeping.ComplicationDropdown
-import com.dacslab.android.sleeping.GenderDropdown
-import com.dacslab.android.sleeping.MySmallTopAppBar
-import com.dacslab.android.sleeping.PasswordField
 import com.dacslab.android.sleeping.ShapeBox
+import com.dacslab.android.sleeping.viewmodel.UserViewModel
 import com.dacslab.android.sleeping.UserInputField
+import com.dacslab.android.sleeping.GenderDropdown
+import com.dacslab.android.sleeping.ComplicationDropdown
+import com.dacslab.android.sleeping.MainRoutes
+import com.dacslab.android.sleeping.MySmallTopAppBar
 import com.dacslab.android.sleeping.model.User
-import com.dacslab.android.sleeping.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 
+
 @Composable
-fun RegisterScreen(
-    navController: NavController,
-    authViewModel: AuthViewModel = hiltViewModel()
+fun UserInfoUpdateScreen(
+    bottomNavController : NavController,
+    mainNavController: NavController,
+    userViewModel: UserViewModel = hiltViewModel()
 ) {
-    val isLoading by authViewModel.isLoading.collectAsState()
-    val error by authViewModel.error.collectAsState()
-    val registerResult by authViewModel.registerResult.collectAsState()
+    val isLoading by userViewModel.isLoading.collectAsState()
+    val error by userViewModel.error.collectAsState()
+    val updateResult by userViewModel.updateResult.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(registerResult) {
-        if (registerResult == true) {
-            navController.navigate(AuthRoutes.LOGIN)
-            authViewModel.clearRegisterResult()
-        }
-    }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -81,13 +76,13 @@ fun RegisterScreen(
                 color = MaterialTheme.colorScheme.background
             ) {
                 MySmallTopAppBar(
-                    title = "회원가입",
-                    navController = navController,
+                    title = "정보 수정",
+                    navController = bottomNavController,
                 ) { innerPadding ->
-                    RegisterForm(
-                        navController = navController,
+                    UserInfoUpdateForm(
+                        bottomNavController = bottomNavController,
                         innerPadding = innerPadding,
-                        authViewModel = authViewModel
+                        userViewModel = userViewModel
                     )
                 }
             }
@@ -104,17 +99,37 @@ fun RegisterScreen(
                     actionLabel = "확인",
                     duration = SnackbarDuration.Short
                 )
-                authViewModel.clearError()
+                userViewModel.clearError()
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        userViewModel.getUserInfo()
+    }
+
+    // 업데이트 성공 시 다른 화면으로 이동
+    LaunchedEffect(updateResult) {
+        if (updateResult == true) {
+            bottomNavController.popBackStack() // 예: 프로필 화면으로 이동
+            userViewModel.clearUpdateResult()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        userViewModel.navigateToLogin.collect {
+            mainNavController.navigate(MainRoutes.AUTH_NAV) {
+                popUpTo(0) { inclusive = true }
             }
         }
     }
 }
 
 @Composable
-fun RegisterForm(
-    navController: NavController?,
+fun UserInfoUpdateForm(
+    bottomNavController: NavController,
     innerPadding: PaddingValues,
-    authViewModel: AuthViewModel
+    userViewModel: UserViewModel
 ) {
     val scrollState = rememberScrollState()
 
@@ -126,35 +141,33 @@ fun RegisterForm(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        RegisterBox(authViewModel)
+        UserInfoUpdateBox(userViewModel)
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "이미 계정이 있으신가요? 로그인",
-            modifier = Modifier.clickable { navController?.popBackStack() },
+            text = "내 정보로 돌아가기",
+            modifier = Modifier.clickable { bottomNavController.popBackStack() },
             color = MaterialTheme.colorScheme.primary,
-            fontSize = 16.sp
+            fontSize = 20.sp
         )
     }
 }
+
 @Composable
-fun RegisterBox(authViewModel: AuthViewModel) {
+fun UserInfoUpdateBox(
+    userViewModel: UserViewModel,
+) {
+    val userInfo by userViewModel.userInfo.collectAsState()
+    // 최초 userInfo 값을 기반으로 userState 초기화
     var userState by remember {
-        mutableStateOf(
-            User(
-                userId = "",
-                userPw = "",
-                userName = "",
-                userGender = null,
-                userAge = null,
-                userHeight = null,
-                userWeight = null,
-                userComp = null
+        mutableStateOf(userInfo ?: User(
+                userId = "", userPw = "", userName = "",
+                userGender = null, userAge = null, userHeight = null,
+                userWeight = null, userComp = null
             )
         )
     }
-    var confirmUserPw by remember { mutableStateOf("") }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         ShapeBox(shape = RoundedCornerShape(20.dp)) {
@@ -169,12 +182,6 @@ fun RegisterBox(authViewModel: AuthViewModel) {
                 { userState = userState.copy(userName = it) }
                 GenderDropdown(userState.userGender)
                 { userState = userState.copy(userGender = it) }
-                UserInputField("사용할 아이디 *", userState.userId)
-                { userState = userState.copy(userId = it) }
-                PasswordField("비밀번호 *", userState.userPw ?: "")
-                { userState = userState.copy(userPw = it) }
-                PasswordField("비밀번호 확인 *", confirmUserPw)
-                { confirmUserPw = it }
                 UserInputField("키 (cm생략, ex:170)", userState.userHeight?.toString())
                 { userState = userState.copy(userHeight = it.toIntOrNull()) }
                 UserInputField("몸무게 (kg생략, ex:60)", userState.userWeight?.toString())
@@ -186,19 +193,22 @@ fun RegisterBox(authViewModel: AuthViewModel) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                RegisterButton(authViewModel, userState, confirmUserPw)
+                UpdateButton(userViewModel, userState)
             }
+        }
+    }
+    // userInfo 변경 시 userState 업데이트
+    LaunchedEffect(userInfo) {
+        userInfo?.let {
+            userState = it
         }
     }
 }
 
-
-
 @Composable
-fun RegisterButton(
-    authViewModel: AuthViewModel,
-    user: User,
-    confirmUserPw: String,
+fun UpdateButton(
+    userViewModel: UserViewModel,
+    user: User
 ) {
     Button(
         modifier = Modifier
@@ -206,23 +216,19 @@ fun RegisterButton(
             .fillMaxWidth(),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
         onClick = {
-            if (user.userPw == confirmUserPw) {
-                authViewModel.register(user)
-            } else {
-                authViewModel.clearError()
-                authViewModel.setError("비밀번호가 일치하지 않습니다.")
+            // 입력 검증 로직
+            when {
+                user.userName.isBlank() -> userViewModel.setError("이름을 입력하세요.")
+                user.userGender.isNullOrBlank() -> userViewModel.setError("성별을 선택하세요.")
+                user.userAge == null -> userViewModel.setError("나이를 입력하세요.")
+                user.userHeight == null -> userViewModel.setError("키를 입력하세요.")
+                user.userWeight == null -> userViewModel.setError("몸무게를 입력하세요.")
+                user.userComp == null -> userViewModel.setError("합병증 여부를 선택하세요.")
+                else -> userViewModel.updateUserInfo(user)
             }
         }
     ) {
-        Text(text = "회원가입", fontSize = 20.sp)
+        Text(text = "수정", fontSize = 20.sp)
     }
 }
 
-
-
-//@Preview(showBackground = true)
-//@Composable
-//fun RegisterPreview() {
-//    // No navController for preview, use a stub
-//    RegisterScreen(navController = null)
-//}

@@ -11,6 +11,13 @@ abstract class BaseResponse {
     abstract val failData: Any?
 }
 
+data class BaseResponseImpl(
+    override val isSuccess: Boolean,
+    override val message: String? = null,
+    override val successData: Any? = null,
+    override val failData: Any? = null
+) : BaseResponse()
+
 data class RegisterResponse(
     override val isSuccess: Boolean,
     override val message: String? = null,
@@ -48,9 +55,3 @@ data class UserInfoResponse(
     override val successData: User? = userInfo
 }
 
-data class BaseResponseImpl(
-    override val isSuccess: Boolean,
-    override val message: String? = null,
-    override val successData: Any? = null,
-    override val failData: Any? = null
-) : BaseResponse()

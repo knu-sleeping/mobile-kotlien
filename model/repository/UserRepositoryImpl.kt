@@ -36,4 +36,18 @@ class UserRepositoryImpl @Inject constructor(
             Pair(false, errorMessage)
         }
     }
+
+    override suspend fun updateUserInfo(user: User): Pair<Boolean, String?> {
+        val result = userRemoteDataSource.updateUserInfo(user)
+
+        return if (result.isSuccess) {
+            val successMessage = result.message ?: "유저 정보 수정 성공"
+            Log.d("UserRepositoryImpl", successMessage)
+            Pair(true, successMessage)
+        } else {
+            val errorMessage = result.message ?: "유저 정보 수정 실패"
+            Log.d("UserRepositoryImpl", "유저 정보 수정 실패: $errorMessage")
+            Pair(false, errorMessage)
+        }
+    }
 }

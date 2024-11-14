@@ -12,4 +12,7 @@ interface UserApiService {
 
     @PATCH("/user/password")
     suspend fun passwordChangeAPI(@Body request: PasswordChangeRequest) : Response<BaseResponseImpl>
+
+    @PATCH("/user/update")
+    suspend fun updateUserInfoAPI(@Body request: User): Response<BaseResponseImpl>
 }

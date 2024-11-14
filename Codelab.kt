@@ -245,6 +245,45 @@ fun MyDropdown(
 
 
 
+@Composable
+fun UserInputField(label: String, value: String?, onValueChange: (String) -> Unit) {
+    MyTextField(
+        label = label,
+        value = value ?: "",
+        onValueChange = onValueChange
+    )
+}
+
+@Composable
+fun GenderDropdown(selectedGender: String?, onGenderSelect: (String) -> Unit) {
+    MyDropdown(
+        label = "성별",
+        options = listOf("남", "여"),
+        selectedOption = selectedGender ?: "",
+        onOptionSelected = { onGenderSelect(it) }
+    )
+}
+
+@Composable
+fun PasswordField(label: String, value: String, onValueChange: (String) -> Unit) {
+    MyVisibleTextField(
+        label = label,
+        value = value,
+        onValueChange = onValueChange
+    )
+}
+
+@Composable
+fun ComplicationDropdown(selectedComplication: Boolean?, onComplicationSelect: (Boolean) -> Unit) {
+    MyDropdown(
+        label = "합병증 유무",
+        options = listOf("O", "X"),
+        selectedOption = if (selectedComplication == true) "O" else "X",
+        onOptionSelected = {
+            onComplicationSelect(it == "O")
+        }
+    )
+}
 
 
 @Composable

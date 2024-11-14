@@ -65,7 +65,9 @@ fun ProfileScreen(
             onPwChange = {
                 bottomNavController.navigate(ProfileRoutes.PASSWORD_CHANGE)
             },
-            onUserUpdate = {},
+            onUserUpdate = {
+                bottomNavController.navigate(ProfileRoutes.UPDATE_USERINFO)
+            },
         )
 
         HandleErrors(

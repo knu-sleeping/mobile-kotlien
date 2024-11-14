@@ -10,4 +10,6 @@ abstract class UserRepository {
         currentPassword: String,
         newPassword: String
     ): Pair<Boolean, String>
+
+    abstract suspend fun updateUserInfo(user: User): Pair<Boolean, String?>
 }
