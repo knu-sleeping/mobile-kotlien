@@ -143,14 +143,9 @@ fun RegisterBox(authViewModel: AuthViewModel) {
     var userState by remember {
         mutableStateOf(
             User(
-                userId = "",
-                userPw = "",
-                userName = "",
-                userGender = null,
-                userAge = null,
-                userHeight = null,
-                userWeight = null,
-                userComp = null
+                userId = "", userPw = "", userName = "",
+                userGender = null, userAge = null, userHeight = null,
+                userWeight = null, userComp = null
             )
         )
     }

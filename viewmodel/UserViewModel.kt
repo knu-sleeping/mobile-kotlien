@@ -36,7 +36,7 @@ open class UserViewModel @Inject constructor(
     private val _pwChangeResult = MutableStateFlow(false)
     val pwChangeResult: StateFlow<Boolean> = _pwChangeResult.asStateFlow()
 
-    private val _updateResult = MutableStateFlow<Boolean?>(null) // User 정보 수정 결과
+    private val _updateResult = MutableStateFlow<Boolean?>(null)
     val updateResult: StateFlow<Boolean?> = _updateResult.asStateFlow()
 
     private val _navigateToLogin = MutableSharedFlow<Unit>(replay = 0)

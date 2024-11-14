@@ -1,6 +1,7 @@
 package com.dacslab.android.sleeping.view.home
 
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -68,6 +69,9 @@ fun ProfileScreen(
             onUserUpdate = {
                 bottomNavController.navigate(ProfileRoutes.UPDATE_USERINFO)
             },
+            onDeleteUser = {
+                // TODO : authViewModel.deleteUser() with Alart? 모달창?.
+            }
         )
 
         HandleErrors(
@@ -95,7 +99,8 @@ private fun ProfileContent(
     isLoading: Boolean,
     onLogout: () -> Unit,
     onPwChange: () -> Unit,
-    onUserUpdate: () -> Unit
+    onUserUpdate: () -> Unit,
+    onDeleteUser: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -119,6 +124,16 @@ private fun ProfileContent(
             PrimaryButton(text = "내 정보 수정", doWhat = onUserUpdate)
             Spacer(modifier = Modifier.height(24.dp))
             LogoutButton(onLogout)
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "회원탈퇴",
+                modifier = Modifier
+                    .align(Alignment.Start) // 왼쪽 정렬
+                    .padding(6.dp)
+                    .clickable { onDeleteUser() },
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 16.sp
+            )
         }
 
         if (isLoading) {
@@ -293,5 +308,6 @@ private fun ProfileContentPreview() {
         onLogout = {}, // 로그아웃 버튼이 눌렸을 때의 동작 정의
         onPwChange = {},
         onUserUpdate = {},
+        onDeleteUser = {}
     )
 }
