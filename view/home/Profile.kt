@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.dacslab.android.sleeping.MainRoutes
 import com.dacslab.android.sleeping.MyAlertDialog
+import com.dacslab.android.sleeping.MyInputAlertDialog
 import com.dacslab.android.sleeping.ProfileRoutes
 import com.dacslab.android.sleeping.model.User
 import com.dacslab.android.sleeping.viewmodel.UserViewModel
@@ -39,15 +40,14 @@ fun ProfileScreen(
     val userInfo by userViewModel.userInfo.collectAsState()
     val userIsLoading by userViewModel.isLoading.collectAsState()
     val userError by userViewModel.error.collectAsState()
+    val deleteAccountResult by userViewModel.apiResult.collectAsState()
+    val pwVerifyResult by userViewModel.pwVerifyApiResult.collectAsState()
     val authIsLoading by authViewModel.isLoading.collectAsState()
     val authError by authViewModel.error.collectAsState()
 
+
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(Unit) {
-        userViewModel.getUserInfo()
-    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -70,8 +70,12 @@ fun ProfileScreen(
             onUserUpdate = {
                 bottomNavController.navigate(ProfileRoutes.UPDATE_USERINFO)
             },
-            onDeleteUser = {
-                // TODO : authViewModel.deleteUser() with Alart? 모달창?.
+            onDeleteUser = { pw ->
+                if (pw == ""){
+                    userViewModel.setError("비밀번호를 입력해주세요")
+                }else{
+                    userViewModel.passwordVerify(pw)
+                }
             }
         )
 
@@ -82,13 +86,34 @@ fun ProfileScreen(
             userViewModel = userViewModel,
             snackbarHostState = snackbarHostState
         )
+    }
 
-        LaunchedEffect(Unit) {
-            userViewModel.navigateToLogin.collect {
-                mainNavController.navigate(MainRoutes.AUTH_NAV) {
-                    popUpTo(0) { inclusive = true }
-                }
+    LaunchedEffect(pwVerifyResult) {
+        if (pwVerifyResult){
+            userViewModel.clearApiResult()
+            userViewModel.deleteAccount()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        userViewModel.getUserInfo()
+    }
+
+    LaunchedEffect(Unit) {
+        userViewModel.navigateToLogin.collect {
+            mainNavController.navigate(MainRoutes.AUTH_NAV) {
+                popUpTo(0) { inclusive = true }
             }
+        }
+    }
+
+    LaunchedEffect(deleteAccountResult) {
+        if (deleteAccountResult) {
+            authViewModel.logout()
+            mainNavController.navigate(MainRoutes.AUTH_NAV) {
+                popUpTo(MainRoutes.HOME_NAV) { inclusive = true }
+            }
+            userViewModel.clearApiResult()
         }
     }
 }
@@ -101,9 +126,11 @@ private fun ProfileContent(
     onLogout: () -> Unit,
     onPwChange: () -> Unit,
     onUserUpdate: () -> Unit,
-    onDeleteUser: () -> Unit
+    onDeleteUser: (String) -> Unit,
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showLogoutConfirmation by remember { mutableStateOf(false) }
+
 
     Box(
         modifier = Modifier
@@ -122,18 +149,21 @@ private fun ProfileContent(
             ProfileDetails(userInfo)
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.height(24.dp))
-            PrimaryButton(text = "비밀번호 변경", doWhat = onPwChange)
+            PrimaryButton(text = "비밀번호 변경", doWhat = onPwChange, isLoading = isLoading)
             Spacer(modifier = Modifier.height(24.dp))
-            PrimaryButton(text = "내 정보 수정", doWhat = onUserUpdate)
+            PrimaryButton(text = "내 정보 수정", doWhat = onUserUpdate, isLoading = isLoading)
             Spacer(modifier = Modifier.height(24.dp))
-            LogoutButton(onLogout)
+            LogoutButton(onClick = {showLogoutConfirmation = true}, isLoading = isLoading)
             Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "회원탈퇴",
                 modifier = Modifier
-                    .clickable { showDeleteConfirmation = true },
+                    .clickable(
+                        enabled = !isLoading,
+                        onClick = { showDeleteConfirmation = true }
+                    ),
                 color = MaterialTheme.colorScheme.primary,
-                fontSize = 16.sp
+                fontSize = 16.sp,
             )
         }
 
@@ -145,15 +175,28 @@ private fun ProfileContent(
             )
         }
         if (showDeleteConfirmation) {
-            MyAlertDialog(
+            MyInputAlertDialog(
                 title = "회원탈퇴",
                 message = "정말 회원탈퇴 하시겠습니까?",
-                onConfirm = {
-                    onDeleteUser()
+                labelText = "비밀번호 입력",
+                onConfirm = { password ->
+                    onDeleteUser(password)
                     showDeleteConfirmation = false
                 },
                 onDismiss = { showDeleteConfirmation = false }
             )
+        }
+
+        if (showLogoutConfirmation) {
+            MyAlertDialog(
+                title = "로그아웃",
+                message = "정말 로그아웃 하시겠습니까?",
+                onConfirm = {
+                    onLogout()
+                },
+                onDismiss = { showLogoutConfirmation = false }
+            )
+
         }
     }
 }
@@ -196,7 +239,13 @@ private fun ProfileDetails(userInfo: User?) {
                 ProfileInfoDivider()
                 ProfileInfoItem(title = "이름", value = user.userName)
                 ProfileInfoDivider()
-                ProfileInfoItem(title = "성별", value = user.userGender ?: "N/A")
+                ProfileInfoItem(title = "성별", value = user.userGender?.let {
+                    when (it) {
+                        "M" -> "남"
+                        "F" -> "여"
+                        else -> null
+                    }
+                } ?: "N/A")
                 ProfileInfoDivider()
                 ProfileInfoItem(title = "나이", value = user.userAge?.toString() ?: "N/A")
                 ProfileInfoDivider()
@@ -204,14 +253,19 @@ private fun ProfileDetails(userInfo: User?) {
                 ProfileInfoDivider()
                 ProfileInfoItem(title = "몸무게", value = user.userWeight?.toString() ?: "N/A")
                 ProfileInfoDivider()
-                ProfileInfoItem(title = "합병증 여부", value = user.userComp?.let { if (it) "있음" else "없음" } ?: "N/A")
+                ProfileInfoItem(title = "합병증 여부", value = user.userComp?.let {
+                    if (it) "있음" else "없음"
+                } ?: "N/A")
             }
         }
     }
 }
 
 @Composable
-private fun LogoutButton(onLogout: () -> Unit) {
+private fun LogoutButton(
+    isLoading: Boolean,
+    onClick: () -> Unit
+) {
     Button(
         modifier = Modifier
             .fillMaxWidth()
@@ -220,7 +274,8 @@ private fun LogoutButton(onLogout: () -> Unit) {
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer
         ),
-        onClick = onLogout
+        onClick = onClick,
+        enabled = !isLoading
     ) {
         Text("로그아웃", fontSize = 18.sp)
     }
@@ -229,6 +284,7 @@ private fun LogoutButton(onLogout: () -> Unit) {
 @Composable
 private fun PrimaryButton(
     text : String,
+    isLoading: Boolean,
     doWhat: () -> Unit
 ) {
     Button(
@@ -239,7 +295,8 @@ private fun PrimaryButton(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         ),
-        onClick = doWhat
+        onClick = doWhat,
+        enabled = !isLoading
     ) {
         Text(text, fontSize = 18.sp)
     }

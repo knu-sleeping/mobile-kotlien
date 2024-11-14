@@ -2,6 +2,7 @@ package com.dacslab.android.sleeping.model.repository
 
 import android.util.Log
 import com.dacslab.android.sleeping.model.User
+import com.dacslab.android.sleeping.model.network.PasswordVerifyRequest
 import com.dacslab.android.sleeping.model.source.remote.UserRemoteDataSource;
 
 import javax.inject.Inject;
@@ -47,6 +48,33 @@ class UserRepositoryImpl @Inject constructor(
         } else {
             val errorMessage = result.message ?: "유저 정보 수정 실패"
             Log.d("UserRepositoryImpl", "유저 정보 수정 실패: $errorMessage")
+            Pair(false, errorMessage)
+        }
+    }
+
+    override suspend fun deleteAccount(): Pair<Boolean, String> {
+        val result = userRemoteDataSource.deleteAccount()
+        return if (result.isSuccess) {
+            val successMessage = result.message ?: "회원탈퇴 성공"
+            Log.d("UserRepositoryImpl", successMessage)
+            Pair(true, successMessage)
+        } else {
+            val errorMessage = result.message ?: "회원탈퇴 실패"
+            Log.d("UserRepositoryImpl", "회원탈퇴 실패: $errorMessage")
+            Pair(false, errorMessage)
+        }
+    }
+
+    override suspend fun verifyPassword(password: String): Pair<Boolean, String> {
+        val result = userRemoteDataSource.verifyPassword(password)
+
+        return if (result.isSuccess) {
+            val successMessage = result.message ?: "비밀번호 검증 성공"
+            Log.d("UserRepositoryImpl", successMessage)
+            Pair(true, successMessage)
+        } else {
+            val errorMessage = result.message ?: "비밀번호 검증 실패"
+            Log.d("UserRepositoryImpl", "비밀번호 검증 실패: $errorMessage")
             Pair(false, errorMessage)
         }
     }

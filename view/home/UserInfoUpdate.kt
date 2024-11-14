@@ -56,7 +56,7 @@ fun UserInfoUpdateScreen(
 ) {
     val isLoading by userViewModel.isLoading.collectAsState()
     val error by userViewModel.error.collectAsState()
-    val updateResult by userViewModel.updateResult.collectAsState()
+    val updateResult by userViewModel.apiResult.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -112,7 +112,7 @@ fun UserInfoUpdateScreen(
     LaunchedEffect(updateResult) {
         if (updateResult == true) {
             bottomNavController.popBackStack() // 예: 프로필 화면으로 이동
-            userViewModel.clearUpdateResult()
+            userViewModel.clearApiResult()
         }
     }
 
@@ -160,6 +160,7 @@ fun UserInfoUpdateBox(
 ) {
     val userInfo by userViewModel.userInfo.collectAsState()
     // 최초 userInfo 값을 기반으로 userState 초기화
+
     var userState by remember {
         mutableStateOf(userInfo ?: User(
                 userId = "", userPw = "", userName = "",
@@ -167,6 +168,12 @@ fun UserInfoUpdateBox(
                 userWeight = null, userComp = null
             )
         )
+    }
+    // userInfo 변경 시 userState 업데이트
+    LaunchedEffect(userInfo) {
+        userInfo?.let {
+            userState = it
+        }
     }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -197,12 +204,7 @@ fun UserInfoUpdateBox(
             }
         }
     }
-    // userInfo 변경 시 userState 업데이트
-    LaunchedEffect(userInfo) {
-        userInfo?.let {
-            userState = it
-        }
-    }
+
 }
 
 @Composable

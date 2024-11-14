@@ -12,4 +12,8 @@ abstract class UserRepository {
     ): Pair<Boolean, String>
 
     abstract suspend fun updateUserInfo(user: User): Pair<Boolean, String?>
+
+    abstract suspend fun deleteAccount(): Pair<Boolean, String>
+
+    abstract suspend fun verifyPassword(password: String): Pair<Boolean, String>
 }

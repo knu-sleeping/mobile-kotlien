@@ -261,8 +261,19 @@ fun GenderDropdown(selectedGender: String?, onGenderSelect: (String) -> Unit) {
     MyDropdown(
         label = "성별",
         options = listOf("남", "여"),
-        selectedOption = selectedGender ?: "",
-        onOptionSelected = { onGenderSelect(it) }
+        selectedOption = when (selectedGender) {
+            "M" -> "남"
+            "F" -> "여"
+            else -> ""
+        },
+        onOptionSelected = {
+            val genderCode = when (it) {
+                "남" -> "M"
+                "여" -> "F"
+                else -> ""
+            }
+            onGenderSelect(genderCode)
+        }
     )
 }
 
@@ -279,10 +290,15 @@ fun PasswordField(label: String, value: String, onValueChange: (String) -> Unit)
 fun ComplicationDropdown(selectedComplication: Boolean?, onComplicationSelect: (Boolean) -> Unit) {
     MyDropdown(
         label = "합병증 유무",
-        options = listOf("O", "X"),
-        selectedOption = if (selectedComplication == true) "O" else "X",
+        options = listOf("있음", "없음"),
+        selectedOption = if (selectedComplication == true) "있음" else "없음",
         onOptionSelected = {
-            onComplicationSelect(it == "O")
+            val complicationCode = when (it) {
+                "있음" -> true
+                "없음" -> false
+                else -> false
+            }
+            onComplicationSelect(complicationCode)
         }
     )
 }
@@ -465,6 +481,48 @@ fun MyAlertDialog(
         }
     )
 }
+
+@Composable
+fun MyInputAlertDialog(
+    title: String,
+    message: String,
+    labelText: String,
+    confirmButtonText: String = "확인",
+    dismissButtonText: String = "취소",
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var inputText by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text(text = title) },
+        text = {
+            Column {
+                Text(text = message)
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = inputText,
+                    onValueChange = { inputText = it },
+                    label = { Text(labelText) },
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = PasswordVisualTransformation()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(inputText) }) {
+                Text(confirmButtonText)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(dismissButtonText)
+            }
+        }
+    )
+}
+
 
 
 @Composable

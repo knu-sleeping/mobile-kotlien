@@ -9,3 +9,8 @@ data class PasswordChangeRequest(
     @SerializedName("new_password")
     val newPassword: String
 )
+
+data class PasswordVerifyRequest(
+    @SerializedName("user_pw")
+    val userPw: String
+)

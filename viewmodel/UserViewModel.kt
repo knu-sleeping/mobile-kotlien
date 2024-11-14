@@ -33,15 +33,14 @@ open class UserViewModel @Inject constructor(
     private val _userInfo = MutableStateFlow<User?>(null)
     val userInfo: StateFlow<User?> = _userInfo.asStateFlow()
 
-    private val _pwChangeResult = MutableStateFlow(false)
-    val pwChangeResult: StateFlow<Boolean> = _pwChangeResult.asStateFlow()
+    private val _apiResult = MutableStateFlow(false)
+    val apiResult: StateFlow<Boolean> = this._apiResult.asStateFlow()
 
-    private val _updateResult = MutableStateFlow<Boolean?>(null)
-    val updateResult: StateFlow<Boolean?> = _updateResult.asStateFlow()
+    private val _pwVerifyApiResult = MutableStateFlow(false)
+    val pwVerifyApiResult: StateFlow<Boolean> = this._pwVerifyApiResult.asStateFlow()
 
     private val _navigateToLogin = MutableSharedFlow<Unit>(replay = 0)
     val navigateToLogin = _navigateToLogin.asSharedFlow()
-
 
     fun getUserInfo() {
         viewModelScope.launch {
@@ -71,38 +70,24 @@ open class UserViewModel @Inject constructor(
                 // UserRepository의 updateUserInfo 호출
                 val (isSuccess, message) = userRepository.updateUserInfo(user)
                 if (isSuccess) {
-                    _updateResult.value = true
+                    _apiResult.value = true
                     _userInfo.value = user // 업데이트 후 새로운 사용자 정보 설정
                     Log.d("UserViewModel", "유저 정보 수정 성공: $message")
                 } else {
-                    _updateResult.value = false
+                    _apiResult.value = false
                     _error.value = message ?: "유저 정보 수정 실패"
                 }
             } catch (e: SessionExpiredException) {
-                _updateResult.value = false
+                _apiResult.value = false
                 Log.d("UserViewModel", "SessionExpiredException!!")
                 authRepository.logout()
                 sharedSessionManager.triggerSessionExpiredAlert()
                 _navigateToLogin.emit(Unit)
             } catch (e: Exception) {
-                _updateResult.value = false
+                _apiResult.value = false
                 _error.value = e.message ?: "유저 정보 수정 중 오류가 발생했습니다."
             } finally {
                 _isLoading.value = false
-            }
-        }
-    }
-
-    fun <T> updateUserField(property: KProperty1<User, T>, value: T) {
-        _userInfo.value = _userInfo.value?.let { user ->
-            when (property) {
-                User::userName -> user.copy(userName = value as String)
-                User::userGender -> user.copy(userGender = value as String?)
-                User::userAge -> user.copy(userAge = value as Int?)
-                User::userHeight -> user.copy(userHeight = value as Int?)
-                User::userWeight -> user.copy(userWeight = value as Int?)
-                User::userComp -> user.copy(userComp = value as Boolean?)
-                else -> user
             }
         }
     }
@@ -115,19 +100,19 @@ open class UserViewModel @Inject constructor(
                 val (isSuccess, message) = userRepository.passwordChange(currentPassword, newPassword)
 
                 if (isSuccess) {
-                    _pwChangeResult.value = true
+                    _apiResult.value = true
                     Log.d("UserViewModel", "비밀번호 변경 성공: $message")
                 } else {
                     _error.value = "비밀번호 변경 실패: $message"
                 }
             } catch (e: SessionExpiredException) {
-                _pwChangeResult.value = false
+                _apiResult.value = false
                 Log.d("UserViewModel", "SessionExpiredException!!")
                 authRepository.logout()
                 sharedSessionManager.triggerSessionExpiredAlert()
                 _navigateToLogin.emit(Unit)
             } catch (e: Exception) {
-                _pwChangeResult.value = false
+                _apiResult.value = false
                 _error.value = e.message ?: "비밀번호 변경 중 오류가 발생했습니다."
             } finally {
                 _isLoading.value = false
@@ -135,12 +120,68 @@ open class UserViewModel @Inject constructor(
         }
     }
 
-    fun clearUpdateResult() {
-        _updateResult.value = null
+    fun passwordVerify(password: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                // UserRepository의 verifyPassword 호출
+                val (isSuccess, message) = userRepository.verifyPassword(password)
+                if (isSuccess) {
+                    Log.d("UserViewModel", "비밀번호 검증 성공: $message")
+                    _pwVerifyApiResult.value = true
+                } else {
+                    _error.value = message ?: "비밀번호가 일치하지 않습니다."
+                }
+            } catch (e: SessionExpiredException) {
+                Log.d("UserViewModel", "SessionExpiredException!!")
+                authRepository.logout()
+                sharedSessionManager.triggerSessionExpiredAlert()
+                _navigateToLogin.emit(Unit)
+            } catch (e: Exception) {
+                _error.value = e.message ?: "비밀번호 검증 중 오류가 발생했습니다."
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
-    fun clearPwChangeResult() {
-        _pwChangeResult.value = false
+
+    fun deleteAccount() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                // UserRepository의 deleteAccount 호출
+                val (isSuccess, message) = userRepository.deleteAccount()
+
+                if (isSuccess) {
+                    _apiResult.value = true
+                    Log.d("UserViewModel", "회원탈퇴 성공: $message")
+                    authRepository.logout()
+                    _navigateToLogin.emit(Unit)
+                } else {
+                    _apiResult.value = false
+                    _error.value = message ?: "회원탈퇴 실패"
+                }
+            } catch (e: SessionExpiredException) {
+                _apiResult.value = false
+                Log.d("UserViewModel", "SessionExpiredException!!")
+                authRepository.logout()
+                sharedSessionManager.triggerSessionExpiredAlert()
+                _navigateToLogin.emit(Unit)
+            } catch (e: Exception) {
+                _apiResult.value = false
+                _error.value = e.message ?: "회원탈퇴 중 오류가 발생했습니다."
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+
+
+    fun clearApiResult() {
+        this._apiResult.value = false
+        this._pwVerifyApiResult.value = false
     }
 
     fun setError(message: String) {

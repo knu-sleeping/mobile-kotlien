@@ -16,7 +16,6 @@ import androidx.navigation.NavController
 import com.dacslab.android.sleeping.MainRoutes
 import com.dacslab.android.sleeping.MySmallTopAppBar
 import com.dacslab.android.sleeping.MyVisibleTextField
-import com.dacslab.android.sleeping.ProfileRoutes
 import com.dacslab.android.sleeping.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 
@@ -27,7 +26,7 @@ fun PasswordChangeScreen(
     userViewModel: UserViewModel = hiltViewModel()
 ) {
     val userError by userViewModel.error.collectAsState()
-    val result by userViewModel.pwChangeResult.collectAsState()
+    val result by userViewModel.apiResult.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -47,7 +46,7 @@ fun PasswordChangeScreen(
     LaunchedEffect(result) {
         if (result == true) {
             bottomNavController.popBackStack()
-            userViewModel.clearPwChangeResult()
+            userViewModel.clearApiResult()
         }
     }
 

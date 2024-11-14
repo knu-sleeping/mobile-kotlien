@@ -4,6 +4,7 @@ import android.util.Log
 import com.dacslab.android.sleeping.model.User
 import com.dacslab.android.sleeping.model.network.BaseResponseImpl
 import com.dacslab.android.sleeping.model.network.PasswordChangeRequest
+import com.dacslab.android.sleeping.model.network.PasswordVerifyRequest
 import com.dacslab.android.sleeping.model.network.SessionExpiredException
 import com.dacslab.android.sleeping.model.network.UserApiService
 import com.dacslab.android.sleeping.model.network.UserInfoResponse
@@ -167,4 +168,94 @@ class UserRemoteDataSource @Inject constructor(
             )
         }
     }
+
+    suspend fun deleteAccount(): BaseResponseImpl {
+        return try {
+            val response = userApiService.deleteAccountAPI()  // 회원탈퇴 API 호출
+            if (response.isSuccessful) {
+                val responseBody = response.body()
+                BaseResponseImpl(
+                    isSuccess = true,
+                    message = responseBody?.message
+                )
+            } else {
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = errorBody?.let {
+                    Gson().fromJson(it, JsonObject::class.java).get("message").asString
+                } ?: "Unknown error: not 200"
+                BaseResponseImpl(
+                    isSuccess = false,
+                    message = errorMessage,
+                    failData = errorBody
+                )
+            }
+        } catch (e: HttpException) {
+            val errorBody = e.response()?.errorBody()?.string()
+            val errorMessage = errorBody?.let {
+                Gson().fromJson(it, JsonObject::class.java).get("message").asString
+            } ?: "HttpException error"
+            BaseResponseImpl(
+                isSuccess = false,
+                message = errorMessage,
+                failData = errorBody
+            )
+        } catch (e: SessionExpiredException) {
+            throw e  // 세션 만료 예외는 상위로 전달
+        } catch (e: Exception) {
+            e.printStackTrace()
+            BaseResponseImpl(
+                isSuccess = false,
+                message = "Network Error",
+                failData = e.message
+            )
+        }
+    }
+
+    suspend fun verifyPassword(password: String): BaseResponseImpl {
+        return try {
+            // API 호출
+            val response = userApiService.verifyPasswordAPI(
+                PasswordVerifyRequest(password)
+            )
+
+            if (response.isSuccessful) {
+                val responseBody = response.body()
+                BaseResponseImpl(
+                    isSuccess = true,
+                    message = responseBody?.message ?: "비밀번호 검증 성공"
+                )
+            } else {
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = errorBody?.let {
+                    Gson().fromJson(it, JsonObject::class.java).get("message").asString
+                } ?: "Unknown error: not 200"
+                BaseResponseImpl(
+                    isSuccess = false,
+                    message = errorMessage,
+                    failData = errorBody
+                )
+            }
+        } catch (e: HttpException) {
+            val errorBody = e.response()?.errorBody()?.string()
+            val errorMessage = errorBody?.let {
+                Gson().fromJson(it, JsonObject::class.java).get("message").asString
+            } ?: "HttpException error"
+            BaseResponseImpl(
+                isSuccess = false,
+                message = errorMessage,
+                failData = errorBody
+            )
+        } catch (e: SessionExpiredException) {
+            throw e // 세션 만료 예외는 상위로 전달
+        } catch (e: Exception) {
+            e.printStackTrace()
+            BaseResponseImpl(
+                isSuccess = false,
+                message = "Network Error",
+                failData = e.message
+            )
+        }
+    }
+
+
 }
