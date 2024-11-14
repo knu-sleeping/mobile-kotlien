@@ -24,6 +24,7 @@ import com.dacslab.android.sleeping.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.dacslab.android.sleeping.MainRoutes
+import com.dacslab.android.sleeping.MyAlertDialog
 import com.dacslab.android.sleeping.ProfileRoutes
 import com.dacslab.android.sleeping.model.User
 import com.dacslab.android.sleeping.viewmodel.UserViewModel
@@ -102,6 +103,8 @@ private fun ProfileContent(
     onUserUpdate: () -> Unit,
     onDeleteUser: () -> Unit
 ) {
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -128,9 +131,7 @@ private fun ProfileContent(
             Text(
                 text = "회원탈퇴",
                 modifier = Modifier
-                    .align(Alignment.Start) // 왼쪽 정렬
-                    .padding(6.dp)
-                    .clickable { onDeleteUser() },
+                    .clickable { showDeleteConfirmation = true },
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 16.sp
             )
@@ -141,6 +142,17 @@ private fun ProfileContent(
                 modifier = Modifier
                     .size(50.dp)
                     .align(Alignment.Center)
+            )
+        }
+        if (showDeleteConfirmation) {
+            MyAlertDialog(
+                title = "회원탈퇴",
+                message = "정말 회원탈퇴 하시겠습니까?",
+                onConfirm = {
+                    onDeleteUser()
+                    showDeleteConfirmation = false
+                },
+                onDismiss = { showDeleteConfirmation = false }
             )
         }
     }
