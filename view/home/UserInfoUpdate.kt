@@ -187,7 +187,7 @@ fun UserInfoUpdateBox(
             ) {
                 UserInputField("이름 *", userState.userName)
                 { userState = userState.copy(userName = it) }
-                GenderDropdown(userState.userGender)
+                GenderDropdown(selectedGender = userState.userGender)
                 { userState = userState.copy(userGender = it) }
                 UserInputField("키 (cm생략, ex:170)", userState.userHeight?.toString())
                 { userState = userState.copy(userHeight = it.toIntOrNull()) }
@@ -195,7 +195,7 @@ fun UserInfoUpdateBox(
                 { userState = userState.copy(userWeight = it.toIntOrNull()) }
                 UserInputField("나이 (ex:25)", userState.userAge?.toString())
                 { userState = userState.copy(userAge = it.toIntOrNull()) }
-                ComplicationDropdown(userState.userComp)
+                ComplicationDropdown(selectedComplication = userState.userComp)
                 { userState = userState.copy(userComp = it) }
 
                 Spacer(modifier = Modifier.height(8.dp))

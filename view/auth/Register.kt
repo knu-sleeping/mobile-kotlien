@@ -162,7 +162,7 @@ fun RegisterBox(authViewModel: AuthViewModel) {
             ) {
                 UserInputField("이름 *", userState.userName)
                 { userState = userState.copy(userName = it) }
-                GenderDropdown(userState.userGender)
+                GenderDropdown(selectedGender = userState.userGender)
                 { userState = userState.copy(userGender = it) }
                 UserInputField("사용할 아이디 *", userState.userId)
                 { userState = userState.copy(userId = it) }
@@ -176,7 +176,7 @@ fun RegisterBox(authViewModel: AuthViewModel) {
                 { userState = userState.copy(userWeight = it.toIntOrNull()) }
                 UserInputField("나이 (ex:25)", userState.userAge?.toString())
                 { userState = userState.copy(userAge = it.toIntOrNull()) }
-                ComplicationDropdown(userState.userComp)
+                ComplicationDropdown(selectedComplication = userState.userComp)
                 { userState = userState.copy(userComp = it) }
 
                 Spacer(modifier = Modifier.height(8.dp))

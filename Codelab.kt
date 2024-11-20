@@ -194,7 +194,7 @@ fun MyDropdown(
     shape: RoundedCornerShape = CircleShape,
     options: List<String>,
     label: String,
-    selectedOption: String = "",
+    selectedOption: String?,
     onOptionSelected: (String) -> Unit = {}
 ) {
     val optionsWithLabel = listOf(label) + options
@@ -205,7 +205,7 @@ fun MyDropdown(
     Column {
         OutlinedTextFieldBackground(MaterialTheme.colorScheme.background, shape) {
             OutlinedTextField(
-                value = selectedOption,
+                value = selectedOption ?: "",
                 readOnly = true,
                 onValueChange = {},
                 trailingIcon = {
@@ -257,9 +257,13 @@ fun UserInputField(label: String, value: String?, onValueChange: (String) -> Uni
 }
 
 @Composable
-fun GenderDropdown(selectedGender: String?, onGenderSelect: (String) -> Unit) {
+fun GenderDropdown(
+    label: String = "성별",
+    selectedGender: String?,
+    onGenderSelect: (String) -> Unit
+) {
     MyDropdown(
-        label = "성별",
+        label = label,
         options = listOf("남", "여"),
         selectedOption = when (selectedGender) {
             "M" -> "남"
@@ -287,11 +291,19 @@ fun PasswordField(label: String, value: String, onValueChange: (String) -> Unit)
 }
 
 @Composable
-fun ComplicationDropdown(selectedComplication: Boolean?, onComplicationSelect: (Boolean) -> Unit) {
+fun ComplicationDropdown(
+    label: String = "합병증 유무",
+    selectedComplication: Boolean?,
+    onComplicationSelect: (Boolean) -> Unit
+) {
     MyDropdown(
-        label = "합병증 유무",
+        label = label,
         options = listOf("있음", "없음"),
-        selectedOption = if (selectedComplication == true) "있음" else "없음",
+        selectedOption = when (selectedComplication) {
+            true -> "있음"
+            false -> "없음"
+            null -> null // 초기값으로 아무것도 선택하지 않은 상태
+        },
         onOptionSelected = {
             val complicationCode = when (it) {
                 "있음" -> true
